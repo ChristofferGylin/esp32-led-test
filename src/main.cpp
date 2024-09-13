@@ -1,45 +1,62 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#define NUM_LEDS 28
+#define NUM_LEDS_PER_GATE 4
+#define NUM_GATES 7
 #define DATA_PIN 2
 
-Adafruit_NeoPixel MY_WS2812B(NUM_LEDS, DATA_PIN, NEO_GRB + NEO_KHZ800);
+const int NUM_LEDS = NUM_LEDS_PER_GATE * NUM_GATES;
+
+class LedColor {
+  public:
+    int red;
+    int green;
+    int blue;
+};
+
+const int NUM_COLORS = 7;
+int count = 0;
+
+LedColor gateColors[NUM_COLORS] = { {red: 255, green: 0, blue: 0}, {red: 0, green: 255, blue: 0}, {red: 0, green: 0, blue: 255}, {red: 127, green: 0, blue: 128}, {red: 128, green: 127, blue: 0}, {red: 0, green: 127, blue: 128}, {red: 85, green: 85, blue: 85}};
+
+Adafruit_NeoPixel pixels(NUM_LEDS, DATA_PIN, NEO_GRB + NEO_KHZ800);
 
 // put function declarations here:
-int myFunction(int, int);
+int selectColor(int, int);
 
 void setup() {
-  MY_WS2812B.begin();
-  MY_WS2812B.setBrightness(30);
+  pixels.begin();
+  pixels.setBrightness(30);
+  
 }
 
 void loop() {
-  MY_WS2812B.clear();
+  pixels.clear();
+  
+  for (int gate = 0; gate < NUM_GATES; gate++) {
+    const int firstPixel = gate * NUM_LEDS_PER_GATE;
+    const int color = selectColor(gate, count);
 
-  for (int pixel = 0; pixel < NUM_LEDS; pixel++) {
-    MY_WS2812B.setPixelColor(pixel, MY_WS2812B.Color(0, 255, 0));
-    MY_WS2812B.show();
-
-    delay(500);
+    for (int pixel = firstPixel; pixel < firstPixel + NUM_LEDS_PER_GATE; pixel++) {
+      pixels.setPixelColor(pixel, pixels.Color(gateColors[color].red, gateColors[color].green, gateColors[color].blue));
+    }
   }
 
-  MY_WS2812B.clear();
-  MY_WS2812B.show();
+  pixels.show();
+
+  if (count < NUM_COLORS - 1) {
+    count++;
+  } else {
+    count = 0;
+  }
   delay(2000);
-
-  for (int pixel = 0; pixel < NUM_LEDS; pixel++) {
-    MY_WS2812B.setPixelColor(pixel, MY_WS2812B.Color(255, 0, 0));
-  }
-
-  MY_WS2812B.show();
-  delay(1000);
-
-  MY_WS2812B.clear();
-  MY_WS2812B.show();
-  delay(1000);
 }
 
 // put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+int selectColor(int gate, int count) {
+  
+  if (gate + count >= NUM_COLORS) {
+    return gate + count - NUM_COLORS;
+  } else {
+    return gate + count;
+  }
 }
